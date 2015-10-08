@@ -1,0 +1,90 @@
+---
+- name: Install PostgreSQL server
+  apt: name=postgresql state=present
+  environment:
+    LC_CTYPE: en_US.UTF-8
+
+- name: Install PostGIS (wheezy)
+  apt: name=postgresql-9.1-postgis
+  when: ansible_distribution_release == "wheezy"
+
+- name: Install PostGIS (jessie)
+  apt: name=postgresql-9.4-postgis-2.1
+  when: ansible_distribution_release == "jessie"
+
+- name: Start PostgreSQL service
+  service: name=postgresql state=started enabled=true
+
+- name: Set pgpass file
+  copy:
+    dest: /root/.pgpass
+    mode: 600
+    content: "localhost:5432:*:postgres:{{ postgres_password }}\n"
+
+- name: Check PostgreSQL password
+  command: psql -w -h localhost -U postgres -c "select 'dummy'" template1
+  register: check_postgres_password
+  ignore_errors: yes
+  always_run: yes
+  changed_when: False
+
+- name: Set PostgreSQL password
+  sudo: yes
+  sudo_user: postgres
+  command: psql template1 -c "ALTER USER postgres PASSWORD '{{ postgres_password }}'"
+  when: check_postgres_password.rc != 0
+
+- name: Install psycopg2
+  apt: name=python-psycopg2
+
+- name: Create PostGIS template database
+  postgresql_db:
+    name: template_postgis
+    template: template0
+    encoding: UTF-8
+    lc_collate: en_US.UTF-8
+    lc_ctype: en_US.UTF-8
+  sudo: yes
+  sudo_user: postgres
+
+- name: Check if PostGIS template database is setup
+  sudo: yes
+  sudo_user: postgres
+  command: psql -c "SELECT * FROM spatial_ref_sys LIMIT 1" template_postgis
+  register: check_postgis_template
+  ignore_errors: yes
+  always_run: yes
+  changed_when: False
+
+- name: Setup PostGIS template database (wheezy)
+  sudo: yes
+  sudo_user: postgres
+  shell: >
+    createlang plpgsql -d template_postgis;
+    psql template_postgis \
+        -f /usr/share/postgresql/9.1/contrib/postgis-1.5/postgis.sql;
+    psql template_postgis \
+        -f /usr/share/postgresql/9.1/contrib/postgis-1.5/spatial_ref_sys.sql;
+    psql -c "UPDATE pg_database SET datistemplate='true'
+             WHERE datname='template_postgis'" template_postgis;
+    psql -c "GRANT SELECT ON spatial_ref_sys TO PUBLIC;" template_postgis;
+    psql -c "GRANT ALL ON geometry_columns TO PUBLIC;" template_postgis;
+  when: check_postgis_template.rc != 0 and ansible_distribution_release == "wheezy"
+
+- name: Setup PostGIS template database (jessie)
+  sudo: yes
+  sudo_user: postgres
+  shell: >
+    createlang plpgsql -d template_postgis;
+    psql -c "CREATE EXTENSION postgis;" template_postgis;
+    psql -c "UPDATE pg_database SET datistemplate='true'
+             WHERE datname='template_postgis'" template_postgis;
+    psql -c "GRANT SELECT ON spatial_ref_sys TO PUBLIC;" template_postgis;
+    psql -c "GRANT ALL ON geometry_columns TO PUBLIC;" template_postgis;
+  when: check_postgis_template.rc != 0 and ansible_distribution_release == "jessie"
+
+- name: Backup PostgreSQL
+  copy:
+    content: 'su postgres -c /usr/bin/pg_dumpall >/var/backups/postgresql.dump\n'
+    dest: /etc/duplicity/pre/postgres
+    mode: 755
