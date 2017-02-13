@@ -9,7 +9,7 @@ This is an Ansible role for installing PostgreSQL on Debian (wheezy or
 jessie). It makes sure the installation is done under the locale
 en_us.UTF-8. It also installs PostGIS, creates a ``template_postgis``
 database template, sets the ``postgres`` password. It assumes the
-``duplicity`` role is also installed, and creates a pre-backup script
+``duply`` role is also installed, and creates a pre-backup script
 that dumps all databases into ``/var/backups``.
 
 Variables

@@ -86,5 +86,5 @@
 - name: Backup PostgreSQL
   copy:
     content: "su postgres -c /usr/bin/pg_dumpall >/var/backups/postgresql.dump\n"
-    dest: /etc/duplicity/pre/postgres
+    dest: /etc/duply/main/pre-scripts/postgres
     mode: 0755
