@@ -25,7 +25,7 @@
   command: psql -w -h localhost -U postgres -c "select 'dummy'" template1
   register: check_postgres_password
   ignore_errors: yes
-  always_run: yes
+  check_mode: no
   changed_when: False
 
 - name: Set PostgreSQL password
@@ -53,7 +53,7 @@
   command: psql -c "SELECT * FROM spatial_ref_sys LIMIT 1" template_postgis
   register: check_postgis_template
   ignore_errors: yes
-  always_run: yes
+  check_mode: no
   changed_when: False
 
 - name: Setup PostGIS template database (wheezy)
