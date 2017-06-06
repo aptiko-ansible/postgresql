@@ -18,7 +18,7 @@
 - name: Set pgpass file
   copy:
     dest: /root/.pgpass
-    mode: 600
+    mode: 0600
     content: "localhost:5432:*:postgres:{{ postgres_password }}\n"
 
 - name: Check PostgreSQL password
