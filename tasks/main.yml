@@ -12,6 +12,10 @@
   apt: name=postgresql-9.4-postgis-2.1
   when: ansible_distribution_release == "jessie"
 
+- name: Install PostGIS (xenial)
+  apt: name=postgresql-9.5-postgis-2.2
+  when: ansible_distribution_release == "xenial"
+
 - name: Start PostgreSQL service
   service: name=postgresql state=started enabled=true
 
@@ -71,7 +75,7 @@
     psql -c "GRANT ALL ON geometry_columns TO PUBLIC;" template_postgis;
   when: check_postgis_template.rc != 0 and ansible_distribution_release == "wheezy"
 
-- name: Setup PostGIS template database (jessie)
+- name: Setup PostGIS template database (later than wheezy)
   become: yes
   become_user: postgres
   shell: >
@@ -81,7 +85,7 @@
              WHERE datname='template_postgis'" template_postgis;
     psql -c "GRANT SELECT ON spatial_ref_sys TO PUBLIC;" template_postgis;
     psql -c "GRANT ALL ON geometry_columns TO PUBLIC;" template_postgis;
-  when: check_postgis_template.rc != 0 and ansible_distribution_release == "jessie"
+  when: check_postgis_template.rc != 0 and ansible_distribution_release != "wheezy"
 
 - name: Backup PostgreSQL
   copy:
