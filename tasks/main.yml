@@ -12,6 +12,10 @@
   apt: name=postgresql-9.4-postgis-2.1
   when: ansible_distribution_release == "jessie"
 
+- name: Install PostGIS (stretch)
+  apt: name=postgresql-9.6-postgis-2.3
+  when: ansible_distribution_release == "stretch"
+
 - name: Install PostGIS (xenial)
   apt: name=postgresql-9.5-postgis-2.2
   when: ansible_distribution_release == "xenial"
