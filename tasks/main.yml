@@ -20,6 +20,14 @@
   apt: name=postgresql-9.5-postgis-2.2
   when: ansible_distribution_release == "xenial"
 
+- name: Install PostGIS (bionic)
+  apt: name=postgresql-10-postgis-2.4
+  when: ansible_distribution_release == "bionic"
+
+- name: Install PostGIS scripts (bionic)
+  apt: name=postgresql-10-postgis-scripts
+  when: ansible_distribution_release == "bionic"
+
 - name: Install Greek unaccent rules (wheezy)
   copy:
     src: unaccent.rules
@@ -43,6 +51,12 @@
     src: unaccent.rules
     dest: /usr/share/postgresql/9.5/tsearch_data/unaccent.rules
   when: ansible_distribution_release == "xenial"
+
+- name: Install Greek unaccent rules (bionic)
+  copy:
+    src: unaccent.rules
+    dest: /usr/share/postgresql/10/tsearch_data/unaccent.rules
+  when: ansible_distribution_release == "bionic"
 
 - name: Start PostgreSQL service
   service: name=postgresql state=started enabled=true
@@ -107,7 +121,7 @@
   become: yes
   become_user: postgres
   shell: >
-    createlang plpgsql -d template_postgis;
+    psql -c "CREATE LANGUAGE plpgsql" -d template_postgis;
     psql -c "CREATE EXTENSION postgis;" template_postgis;
     psql -c "UPDATE pg_database SET datistemplate='true'
              WHERE datname='template_postgis'" template_postgis;
