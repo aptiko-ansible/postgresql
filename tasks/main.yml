@@ -20,6 +20,30 @@
   apt: name=postgresql-9.5-postgis-2.2
   when: ansible_distribution_release == "xenial"
 
+- name: Install Greek unaccent rules (wheezy)
+  copy:
+    src: unaccent.rules
+    dest: /usr/share/postgresql/9.1/tsearch_data/unaccent.rules
+  when: ansible_distribution_release == "wheezy"
+
+- name: Install Greek unaccent rules (jessie)
+  copy:
+    src: unaccent.rules
+    dest: /usr/share/postgresql/9.4/tsearch_data/unaccent.rules
+  when: ansible_distribution_release == "jessie"
+
+- name: Install Greek unaccent rules (stretch)
+  copy:
+    src: unaccent.rules
+    dest: /usr/share/postgresql/9.6/tsearch_data/unaccent.rules
+  when: ansible_distribution_release == "stretch"
+
+- name: Install Greek unaccent rules (xenial)
+  copy:
+    src: unaccent.rules
+    dest: /usr/share/postgresql/9.5/tsearch_data/unaccent.rules
+  when: ansible_distribution_release == "xenial"
+
 - name: Start PostgreSQL service
   service: name=postgresql state=started enabled=true
 
