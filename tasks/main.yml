@@ -4,14 +4,6 @@
   environment:
     LC_CTYPE: en_US.UTF-8
 
-- name: Install PostGIS (wheezy)
-  apt: name=postgresql-9.1-postgis
-  when: ansible_distribution_release == "wheezy"
-
-- name: Install PostGIS (jessie)
-  apt: name=postgresql-9.4-postgis-2.1
-  when: ansible_distribution_release == "jessie"
-
 - name: Install PostGIS (stretch)
   apt: name=postgresql-9.6-postgis-2.3
   when: ansible_distribution_release == "stretch"
@@ -20,9 +12,13 @@
   apt: name=postgresql-9.6-postgis-scripts
   when: ansible_distribution_release == "stretch"
 
-- name: Install PostGIS (xenial)
-  apt: name=postgresql-9.5-postgis-2.2
-  when: ansible_distribution_release == "xenial"
+- name: Install PostGIS (buster)
+  apt: name=postgresql-11-postgis-2.5
+  when: ansible_distribution_release == "buster"
+
+- name: Install PostGIS scripts (buster)
+  apt: name=postgresql-11-postgis-2.5-scripts
+  when: ansible_distribution_release == "buster"
 
 - name: Install PostGIS (bionic)
   apt: name=postgresql-10-postgis-2.4
@@ -32,29 +28,17 @@
   apt: name=postgresql-10-postgis-scripts
   when: ansible_distribution_release == "bionic"
 
-- name: Install Greek unaccent rules (wheezy)
-  copy:
-    src: unaccent.rules
-    dest: /usr/share/postgresql/9.1/tsearch_data/unaccent.rules
-  when: ansible_distribution_release == "wheezy"
-
-- name: Install Greek unaccent rules (jessie)
-  copy:
-    src: unaccent.rules
-    dest: /usr/share/postgresql/9.4/tsearch_data/unaccent.rules
-  when: ansible_distribution_release == "jessie"
-
 - name: Install Greek unaccent rules (stretch)
   copy:
     src: unaccent.rules
     dest: /usr/share/postgresql/9.6/tsearch_data/unaccent.rules
   when: ansible_distribution_release == "stretch"
 
-- name: Install Greek unaccent rules (xenial)
+- name: Install Greek unaccent rules (buster)
   copy:
     src: unaccent.rules
-    dest: /usr/share/postgresql/9.5/tsearch_data/unaccent.rules
-  when: ansible_distribution_release == "xenial"
+    dest: /usr/share/postgresql/11/tsearch_data/unaccent.rules
+  when: ansible_distribution_release == "stretch"
 
 - name: Install Greek unaccent rules (bionic)
   copy:
@@ -106,22 +90,7 @@
   check_mode: no
   changed_when: False
 
-- name: Setup PostGIS template database (wheezy)
-  become: yes
-  become_user: postgres
-  shell: >
-    createlang plpgsql -d template_postgis;
-    psql template_postgis \
-        -f /usr/share/postgresql/9.1/contrib/postgis-1.5/postgis.sql;
-    psql template_postgis \
-        -f /usr/share/postgresql/9.1/contrib/postgis-1.5/spatial_ref_sys.sql;
-    psql -c "UPDATE pg_database SET datistemplate='true'
-             WHERE datname='template_postgis'" template_postgis;
-    psql -c "GRANT SELECT ON spatial_ref_sys TO PUBLIC;" template_postgis;
-    psql -c "GRANT ALL ON geometry_columns TO PUBLIC;" template_postgis;
-  when: check_postgis_template.rc != 0 and ansible_distribution_release == "wheezy"
-
-- name: Setup PostGIS template database (later than wheezy)
+- name: Setup PostGIS template database
   become: yes
   become_user: postgres
   shell: >
@@ -131,7 +100,6 @@
              WHERE datname='template_postgis'" template_postgis;
     psql -c "GRANT SELECT ON spatial_ref_sys TO PUBLIC;" template_postgis;
     psql -c "GRANT ALL ON geometry_columns TO PUBLIC;" template_postgis;
-  when: check_postgis_template.rc != 0 and ansible_distribution_release != "wheezy"
 
 - name: Backup PostgreSQL
   copy:
