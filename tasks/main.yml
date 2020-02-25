@@ -38,7 +38,7 @@
   copy:
     src: unaccent.rules
     dest: /usr/share/postgresql/11/tsearch_data/unaccent.rules
-  when: ansible_distribution_release == "stretch"
+  when: ansible_distribution_release == "buster"
 
 - name: Install Greek unaccent rules (bionic)
   copy:
