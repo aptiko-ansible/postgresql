@@ -1,8 +1,33 @@
 ---
+- name: Setup Timescale apt key
+  apt_key:
+    url: https://packagecloud.io/timescale/timescaledb/gpgkey
+    state: present
+  when: use_timescale
+
+- name: Setup Timescale repository
+  apt_repository:
+    repo: deb https://packagecloud.io/timescale/timescaledb/debian buster main
+    state: present
+    update_cache: true
+  when: use_timescale
+
 - name: Install PostgreSQL server
   apt: name=postgresql state=present
   environment:
     LC_CTYPE: en_US.UTF-8
+
+- name: Install Timescale
+  apt: name=timescaledb-postgresql-11
+  when: use_timescale
+
+- name: Configure Timescale
+  lineinfile:
+    path: /etc/postgresql/11/main/postgresql.conf
+    line: "shared_preload_libraries = 'timescaledb'"
+  when: use_timescale
+  notify:
+   - Restart PostgreSQL
 
 - name: Install PostGIS (stretch)
   apt: name=postgresql-9.6-postgis-2.3

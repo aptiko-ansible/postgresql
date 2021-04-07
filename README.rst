@@ -15,6 +15,8 @@ that dumps all databases into ``/var/backups``.
 Variables
 =========
 
+- ``use_timescale``: Default ``false``. Set to ``true`` to install
+  Timescale.
 - ``postgres_password``: The password of the ``postgres`` database user.
   Store this in the vault. The role sets the ``postgres`` database user
   to have this password.
@@ -25,7 +27,7 @@ Meta
 Written by Antonis Christofides
 
 | Copyright (C) 2014-2015 Antonis Christofides
-| Copyright (C) 2014-2015 National Technical University of Athens
+| Copyright (C) 2014-2021 National Technical University of Athens
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
