@@ -132,3 +132,11 @@
     dest: /etc/duply/main/pre-scripts/postgres
     mode: 0755
   when: (duply_deactivate is not defined) or not duply_deactivate
+
+# Sometimes plays that are executed after this role (notable executing
+# "CREATE EXTENSION timescaledb") need PostgreSQL to have restarted in
+# order for some of the changes above to have occurred (notably
+# configuring Timescale). We therefore cannot defer restarting
+# PostgreSQL any more.
+- name: Flush handlers
+  meta: flush_handlers
