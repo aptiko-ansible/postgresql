@@ -128,7 +128,23 @@
 
 - name: Backup PostgreSQL
   copy:
-    content: "#!/bin/bash\nsu postgres -c /usr/bin/pg_dumpall >/var/backups/postgresql.dump\n"
+    content: |
+      #!/bin/bash
+      cd /
+      mkdir -p /var/backups/postgresql
+      chown postgres:postgres /var/backups/postgresql
+      databases=$(
+        sudo -u postgres \
+        psql -qtc "SELECT datname FROM pg_database WHERE datistemplate='f'"
+      )
+      for db in $databases; do
+        errfile=/var/backups/postgresql/$db.err
+        dumpfile=/var/backups/postgresql/$db.dump
+        sudo -u postgres /usr/bin/pg_dump -Fc -f $dumpfile $db 2>$errfile
+        if grep -q WARN $errfile || grep -q ERR $errfile; then
+          cat $errfile
+        fi
+      done
     dest: /etc/duply/main/pre-scripts/postgres
     mode: 0755
   when: (duply_deactivate is not defined) or not duply_deactivate
