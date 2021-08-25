@@ -10,7 +10,7 @@
     repo: deb https://packagecloud.io/timescale/timescaledb/debian buster main
     state: present
     update_cache: true
-  when: use_timescale
+  when: use_timescale and ansible_distribution_release == "buster"
 
 - name: Install PostgreSQL server
   apt: name=postgresql state=present
@@ -45,6 +45,14 @@
   apt: name=postgresql-11-postgis-2.5-scripts
   when: ansible_distribution_release == "buster"
 
+- name: Install PostGIS (bullseye)
+  apt: name=postgresql-13-postgis-3
+  when: ansible_distribution_release == "bullseye"
+
+- name: Install PostGIS scripts (bullseye)
+  apt: name=postgresql-13-postgis-3-scripts
+  when: ansible_distribution_release == "bullseye"
+
 - name: Install PostGIS (bionic)
   apt: name=postgresql-10-postgis-2.4
   when: ansible_distribution_release == "bionic"
@@ -64,6 +72,12 @@
     src: unaccent.rules
     dest: /usr/share/postgresql/11/tsearch_data/unaccent.rules
   when: ansible_distribution_release == "buster"
+
+- name: Install Greek unaccent rules (bullseye)
+  copy:
+    src: unaccent.rules
+    dest: /usr/share/postgresql/13/tsearch_data/unaccent.rules
+  when: ansible_distribution_release == "bullseye"
 
 - name: Install Greek unaccent rules (bionic)
   copy:
