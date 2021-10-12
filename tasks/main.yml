@@ -1,16 +1,44 @@
 ---
-- name: Setup Timescale apt key
-  apt_key:
-    url: https://packagecloud.io/timescale/timescaledb/gpgkey
-    state: present
+- name: Install Timescale keyring
+  copy: src=timescale.keyring dest=/usr/share/keyrings/timescale.keyring
   when: use_timescale
+
+- name: Set variables for Debian 11
+  set_fact:
+    postgresql_version: 13
+    timescale_apt_package: timescaledb-2-postgresql-13
+    postgis_apt_package: postgresql-13-postgis-3
+    postgis_scripts_apt_package: postgresql-13-postgis-3-scripts
+  when: ansible_distribution_release == "bullseye"
+
+- name: Set variables for Debian 10
+  set_fact:
+    postgresql_version: 11
+    timescale_apt_package: timescaledb-postgresql-11
+    postgis_apt_package: postgresql-11-postgis-2.5
+    postgis_scripts_apt_package: postgresql-11-postgis-2.5-scripts
+  when: ansible_distribution_release == "buster"
+
+- name: Set variables for Debian 9
+  set_fact:
+    postgresql_version: 9.6
+    postgis_apt_package: postgresql-9.6-postgis-2.3
+    postgis_scripts_apt_package: postgresql-9.6-postgis-2.3-scripts
+  when: ansible_distribution_release == "stretch"
+
+- name: Set variables for Ubuntu 18.04
+  set_fact:
+    postgresql_version: 10
+    postgis_apt_package: postgresql-10-postgis-2.4
+    postgis_scripts_apt_package: postgresql-10-postgis-2.4-scripts
+  when: ansible_distribution_release == "bionic"
 
 - name: Setup Timescale repository
   apt_repository:
-    repo: deb https://packagecloud.io/timescale/timescaledb/debian buster main
+    repo: deb [signed-by=/usr/share/keyrings/timescale.keyring] https://packagecloud.io/timescale/timescaledb/debian {{ ansible_distribution_release }} main
     state: present
     update_cache: true
-  when: use_timescale and ansible_distribution_release == "buster"
+  when: use_timescale
 
 - name: Install PostgreSQL server
   apt: name=postgresql state=present
@@ -18,72 +46,27 @@
     LC_CTYPE: en_US.UTF-8
 
 - name: Install Timescale
-  apt: name=timescaledb-postgresql-11
+  apt: name={{ timescale_apt_package }}
   when: use_timescale
 
 - name: Configure Timescale
   lineinfile:
-    path: /etc/postgresql/11/main/postgresql.conf
+    path: /etc/postgresql/{{ postgresql_version}}/main/postgresql.conf
     line: "shared_preload_libraries = 'timescaledb'"
   when: use_timescale
   notify:
    - Restart PostgreSQL
 
-- name: Install PostGIS (stretch)
-  apt: name=postgresql-9.6-postgis-2.3
-  when: ansible_distribution_release == "stretch"
+- name: Install PostGIS
+  apt: name={{ postgis_apt_package }}
 
-- name: Install PostGIS scripts (stretch)
-  apt: name=postgresql-9.6-postgis-scripts
-  when: ansible_distribution_release == "stretch"
+- name: Install PostGIS scripts
+  apt: name={{ postgis_scripts_apt_package }}
 
-- name: Install PostGIS (buster)
-  apt: name=postgresql-11-postgis-2.5
-  when: ansible_distribution_release == "buster"
-
-- name: Install PostGIS scripts (buster)
-  apt: name=postgresql-11-postgis-2.5-scripts
-  when: ansible_distribution_release == "buster"
-
-- name: Install PostGIS (bullseye)
-  apt: name=postgresql-13-postgis-3
-  when: ansible_distribution_release == "bullseye"
-
-- name: Install PostGIS scripts (bullseye)
-  apt: name=postgresql-13-postgis-3-scripts
-  when: ansible_distribution_release == "bullseye"
-
-- name: Install PostGIS (bionic)
-  apt: name=postgresql-10-postgis-2.4
-  when: ansible_distribution_release == "bionic"
-
-- name: Install PostGIS scripts (bionic)
-  apt: name=postgresql-10-postgis-scripts
-  when: ansible_distribution_release == "bionic"
-
-- name: Install Greek unaccent rules (stretch)
+- name: Install Greek unaccent rules
   copy:
     src: unaccent.rules
-    dest: /usr/share/postgresql/9.6/tsearch_data/unaccent.rules
-  when: ansible_distribution_release == "stretch"
-
-- name: Install Greek unaccent rules (buster)
-  copy:
-    src: unaccent.rules
-    dest: /usr/share/postgresql/11/tsearch_data/unaccent.rules
-  when: ansible_distribution_release == "buster"
-
-- name: Install Greek unaccent rules (bullseye)
-  copy:
-    src: unaccent.rules
-    dest: /usr/share/postgresql/13/tsearch_data/unaccent.rules
-  when: ansible_distribution_release == "bullseye"
-
-- name: Install Greek unaccent rules (bionic)
-  copy:
-    src: unaccent.rules
-    dest: /usr/share/postgresql/10/tsearch_data/unaccent.rules
-  when: ansible_distribution_release == "bionic"
+    dest: /usr/share/postgresql/{{ postgresql_version }}/tsearch_data/unaccent.rules
 
 - name: Start PostgreSQL service
   service: name=postgresql state=started enabled=true
