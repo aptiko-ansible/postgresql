@@ -40,8 +40,13 @@
     update_cache: true
   when: use_timescale
 
-- name: Install PostgreSQL server
-  apt: name=postgresql state=present
+- name: Install apt packages required for PostgreSQL
+  apt:
+    name:
+     - postgresql
+     - "{{ postgis_apt_package }}"
+     - "{{ postgis_scripts_apt_package }}"
+     - python3-psycopg2
   environment:
     LC_CTYPE: en_US.UTF-8
 
@@ -56,12 +61,6 @@
   when: use_timescale
   notify:
    - Restart PostgreSQL
-
-- name: Install PostGIS
-  apt: name={{ postgis_apt_package }}
-
-- name: Install PostGIS scripts
-  apt: name={{ postgis_scripts_apt_package }}
 
 - name: Install Greek unaccent rules
   copy:
@@ -89,9 +88,6 @@
   become_user: postgres
   command: psql template1 -c "ALTER USER postgres PASSWORD '{{ postgres_password }}'"
   when: check_postgres_password.rc != 0
-
-- name: Install psycopg2
-  apt: name=python3-psycopg2
 
 - name: Create PostGIS template database
   postgresql_db:
