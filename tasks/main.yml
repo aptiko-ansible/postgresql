@@ -26,6 +26,14 @@
     postgis_scripts_apt_package: postgresql-9.6-postgis-2.3-scripts
   when: ansible_distribution_release == "stretch"
 
+- name: Set variables for Ubuntu 22.04
+  set_fact:
+    postgresql_version: 14
+    postgis_apt_package: postgresql-14-postgis-3
+    postgis_scripts_apt_package: postgresql-14-postgis-3-scripts
+    timescale_apt_package: timescaledb-2-postgresql-14
+  when: ansible_distribution_release == "jammy"
+
 - name: Set variables for Ubuntu 18.04
   set_fact:
     postgresql_version: 10
@@ -35,7 +43,7 @@
 
 - name: Setup Timescale repository
   apt_repository:
-    repo: deb [signed-by=/usr/share/keyrings/timescale.keyring] https://packagecloud.io/timescale/timescaledb/debian {{ ansible_distribution_release }} main
+    repo: deb [signed-by=/usr/share/keyrings/timescale.keyring] https://packagecloud.io/timescale/timescaledb/{{ ansible_distribution|lower }} {{ ansible_distribution_release }} main
     state: present
     update_cache: true
   when: use_timescale
